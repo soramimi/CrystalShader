@@ -115,7 +115,7 @@ Shader "Shader Forge/Crystal Shader" {
                 float3 lightColor = _LightColor0.rgb;
                 o.pos = UnityObjectToClipPos( v.vertex );
                 UNITY_TRANSFER_FOG(o,o.pos);
-                o.projPos = ComputeScreenPos (o.pos);
+                o.projPos = ComputeGrabScreenPos (o.pos);
                 COMPUTE_EYEDEPTH(o.projPos.z);
                 return o;
             }
@@ -328,7 +328,7 @@ Shader "Shader Forge/Crystal Shader" {
                 float3 lightColor = _LightColor0.rgb;
                 o.pos = UnityObjectToClipPos( v.vertex );
                 UNITY_TRANSFER_FOG(o,o.pos);
-                o.projPos = ComputeScreenPos (o.pos);
+                o.projPos = ComputeGrabScreenPos (o.pos);
                 COMPUTE_EYEDEPTH(o.projPos.z);
                 TRANSFER_VERTEX_TO_FRAGMENT(o)
                 return o;
@@ -527,7 +527,7 @@ Shader "Shader Forge/Crystal Shader" {
                 o.posWorld = mul(unity_ObjectToWorld, v.vertex);
                 float3 lightColor = _LightColor0.rgb;
                 o.pos = UnityMetaVertexPosition(v.vertex, v.texcoord1.xy, v.texcoord2.xy, unity_LightmapST, unity_DynamicLightmapST );
-                o.projPos = ComputeScreenPos (o.pos);
+                o.projPos = ComputeGrabScreenPos (o.pos);
                 COMPUTE_EYEDEPTH(o.projPos.z);
                 return o;
             }
