@@ -55,7 +55,8 @@ Shader "Shader Forge/Crystal Shader" {
             #pragma multi_compile_fog
             #pragma only_renderers d3d9 d3d11 glcore gles 
             #pragma target 3.0
-            uniform sampler2D _GrabTexture;
+//	uniform sampler2D _GrabTexture;
+	UNITY_DECLARE_SCREENSPACE_TEXTURE(_GrabTexture);
             uniform float _Metallic;
             uniform float _Gloss;
             uniform float _Repetition;
@@ -79,6 +80,7 @@ Shader "Shader Forge/Crystal Shader" {
                 float2 texcoord0 : TEXCOORD0;
                 float2 texcoord1 : TEXCOORD1;
                 float2 texcoord2 : TEXCOORD2;
+UNITY_VERTEX_INPUT_INSTANCE_ID
             };
             struct VertexOutput {
                 float4 pos : SV_POSITION;
@@ -94,9 +96,18 @@ Shader "Shader Forge/Crystal Shader" {
                 #if defined(LIGHTMAP_ON) || defined(UNITY_SHOULD_SAMPLE_SH)
                     float4 ambientOrLightmapUV : TEXCOORD9;
                 #endif
+UNITY_VERTEX_OUTPUT_STEREO
             };
+float4 sampleGrabTexture(float2 uv)
+{
+//	return tex2D(_GrabTexture, uv);
+	return UNITY_SAMPLE_SCREENSPACE_TEXTURE(_GrabTexture, uv);
+}
             VertexOutput vert (VertexInput v) {
                 VertexOutput o = (VertexOutput)0;
+UNITY_SETUP_INSTANCE_ID(v);
+UNITY_INITIALIZE_OUTPUT(VertexOutput, o);
+UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 o.uv0 = v.texcoord0;
                 o.uv1 = v.texcoord1;
                 o.uv2 = v.texcoord2;
@@ -120,6 +131,7 @@ Shader "Shader Forge/Crystal Shader" {
                 return o;
             }
             float4 frag(VertexOutput i, float facing : VFACE) : COLOR {
+UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 float isFrontFace = ( facing >= 0 ? 1 : 0 );
                 float faceSign = ( facing >= 0 ? 1 : -1 );
                 i.normalDir = normalize(i.normalDir);
@@ -131,7 +143,7 @@ Shader "Shader Forge/Crystal Shader" {
                 float3 normalDirection = normalize(mul( normalLocal, tangentTransform )); // Perturbed normals
                 float3 viewReflectDirection = reflect( -viewDirection, normalDirection );
                 float2 sceneUVs = (i.projPos.xy / i.projPos.w);
-                float4 sceneColor = tex2D(_GrabTexture, sceneUVs);
+                float4 sceneColor = sampleGrabTexture(sceneUVs);
                 float4 _alpha_var = tex2D(_alpha,TRANSFORM_TEX(i.uv0, _alpha));
                 clip(_alpha_var.a - 0.5);
                 float3 lightDirection = normalize(_WorldSpaceLightPos0.xyz);
@@ -242,7 +254,7 @@ Shader "Shader Forge/Crystal Shader" {
                 float node_4434 = 1.0;
                 float2 node_4873 = mul( UNITY_MATRIX_V, float4((-1*normalDirection),0) ).xyz.rgb.rg;
                 float4 _BaseColortex_var = tex2D(_BaseColortex,TRANSFORM_TEX(i.uv0, _BaseColortex));
-                float3 emissive = saturate(((lerp(((saturate(3.0*abs(1.0-2.0*frac(((0.5+node_1156)*_ColorLoop)+float3(0.0,-1.0/3.0,1.0/3.0)))-1)*node_8465)+(node_5582*saturate(3.0*abs(1.0-2.0*frac((node_7214*_ColorLoop)+float3(0.0,-1.0/3.0,1.0/3.0)))-1))),float3(node_3443,node_3443,node_3443),_PasutelColor)*_ColoeLevel*lerp( _LightColor0.rgb, lerp(_LightColor0.rgb,float3(node_4434,node_4434,node_4434),step(_LightColor0.r,0.0)), _LightCompletion ))+(float3(tex2D( _GrabTexture, ((node_4873*pow(1.0-max(0,dot(normalDirection, viewDirection)),(_Distortion-_ChromaticAberration)))+sceneUVs.rg)).r,tex2D( _GrabTexture, ((node_4873*pow(1.0-max(0,dot(normalDirection, viewDirection)),_Distortion))+sceneUVs.rg)).g,tex2D( _GrabTexture, ((node_4873*pow(1.0-max(0,dot(normalDirection, viewDirection)),(_Distortion+_ChromaticAberration)))+sceneUVs.rg)).b)*_BasaColor.rgb*_BaseColortex_var.rgb)));
+                float3 emissive = saturate(((lerp(((saturate(3.0*abs(1.0-2.0*frac(((0.5+node_1156)*_ColorLoop)+float3(0.0,-1.0/3.0,1.0/3.0)))-1)*node_8465)+(node_5582*saturate(3.0*abs(1.0-2.0*frac((node_7214*_ColorLoop)+float3(0.0,-1.0/3.0,1.0/3.0)))-1))),float3(node_3443,node_3443,node_3443),_PasutelColor)*_ColoeLevel*lerp( _LightColor0.rgb, lerp(_LightColor0.rgb,float3(node_4434,node_4434,node_4434),step(_LightColor0.r,0.0)), _LightCompletion ))+(float3(sampleGrabTexture(((node_4873*pow(1.0-max(0,dot(normalDirection, viewDirection)),(_Distortion-_ChromaticAberration)))+sceneUVs.rg)).r,sampleGrabTexture(((node_4873*pow(1.0-max(0,dot(normalDirection, viewDirection)),_Distortion))+sceneUVs.rg)).g,sampleGrabTexture(((node_4873*pow(1.0-max(0,dot(normalDirection, viewDirection)),(_Distortion+_ChromaticAberration)))+sceneUVs.rg)).b)*_BasaColor.rgb*_BaseColortex_var.rgb)));
 /// Final Color:
                 float3 finalColor = diffuse + specular + emissive;
                 fixed4 finalRGBA = fixed4(finalColor,1);
